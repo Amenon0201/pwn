@@ -30,7 +30,7 @@ Register thường có chung kích thước với kích thước của architect
 
 Register có thể acess từng phần.
 
-![các phần của register](/register.png)
+![các phần của register](/picture/register.png)
 
 Có thể thực hiện các phép toán và phép logic với register nếu có data bên trong chúng.
 
@@ -40,10 +40,28 @@ Một số register đặc biệt:
 
 Ngoài ra, x86 architecture còn có nhiều register khác để dùng cho: operating system, floating point, xử lý data lớn (512 zmm register),...
 
+# Memory layout
+
+Memory có hai phần chính là text và data. Data được chia làm hai phần là static và dynamic. Static có thể chia làm hai phần là initialize và uninitialized. Dynamic được chia làm hai phần gồm heap và stack.
+
+!(memory Layout)[/picture/memory layout.png]
+
+Memory:
+- Text (hay còn gọi là code segment): lưu trữ lệnh thực thi chương trình. Text segment read only, sharable và fixed size.
+- Data:
+    - Static:
+        - Initialized (DS): lưu trữ statics và global variable đã được khởi tạo giá trị, có read/write accesible và fixed size.
+        - Uninitialized (BSS): lưu trữ statics và global variable chưa được khởi tạo giá trị hoặc được khởi tạo giá trị băng 0, có read/write accesible và fixed size.
+    - Dynamic:
+        - Heap: Có dynamic size và có thể điều chỉnh size qua các lệnh như malloc, free, new, delete,... Thường dùng cấp phát bộ nhớ động cho các dạng dữ liệu động như danh sách liên kết. Sau khi dùng xong mà không release bộ nhớ có thể gây ra lỗi memory leaks và các memory errors khác
+        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out)
+
+Dữ liệu được lưu trong Uninitialized được khởi tạo giá trị 0.
+
 # Assembly
 Assembly (hợp ngữ) là ngôn ngữ bậc thấp gần nhất với machine code (mã máy). Assembly thông qua quá trình assembling (dịch hợp ngữ) thành machine code:
 
-'Assembly -> Assembler (Trình dịch hợp ngữ) -> Machine code'
+`Assembly -> Assembler (Trình dịch hợp ngữ) -> Machine code`
 
-Các kiến trúc CPU khác nhau cần bộ assembly khác nhau. Đối với x86 (và x86_64) thì dùng Intel assembly (phổ biến hơn) và AT&T assembly.
+Các kiến trúc CPU khác nhau cần bộ assembly khác nhau. Đối với x86 (và x86_64) thì dùng và AT&T assembly Intel assembly (phổ biến hơn).
 
