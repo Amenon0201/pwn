@@ -44,7 +44,7 @@ Ngoài ra, x86 architecture còn có nhiều register khác để dùng cho: ope
 
 Memory có hai phần chính là text và data. Data được chia làm hai phần là static và dynamic. Static có thể chia làm hai phần là initialize và uninitialized. Dynamic được chia làm hai phần gồm heap và stack.
 
-!(memory Layout)[/picture/memory layout.png]
+![memory layout](/picture/memory_layout.png)
 
 Memory:
 - Text (hay còn gọi là code segment): lưu trữ lệnh thực thi chương trình. Text segment read only, sharable và fixed size.
@@ -54,14 +54,75 @@ Memory:
         - Uninitialized (BSS): lưu trữ statics và global variable chưa được khởi tạo giá trị hoặc được khởi tạo giá trị băng 0, có read/write accesible và fixed size.
     - Dynamic:
         - Heap: Có dynamic size và có thể điều chỉnh size qua các lệnh như malloc, free, new, delete,... Thường dùng cấp phát bộ nhớ động cho các dạng dữ liệu động như danh sách liên kết. Sau khi dùng xong mà không release bộ nhớ có thể gây ra lỗi memory leaks và các memory errors khác
-        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out)
-
-Dữ liệu được lưu trong Uninitialized được khởi tạo giá trị 0.
+        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out). Dùng push và pop để đẩy dữ liệu vào và lấy dữ liệu ra. Address của stack được lưu trong register rsp
 
 # Assembly
+## Kiến thức chung
 Assembly (hợp ngữ) là ngôn ngữ bậc thấp gần nhất với machine code (mã máy). Assembly thông qua quá trình assembling (dịch hợp ngữ) thành machine code:
 
 `Assembly -> Assembler (Trình dịch hợp ngữ) -> Machine code`
 
 Các kiến trúc CPU khác nhau cần bộ assembly khác nhau. Đối với x86 (và x86_64) thì dùng và AT&T assembly Intel assembly (phổ biến hơn).
 
+Đuôi phổ biến của file assembly là '.s' hoặc '.S'. Đuôi của file object là '.o'.
+
+## Một số lệnh
+
+Lệnh mov (move):
+- mov rax, 0x539: đưa giá trị 0x539 vào rax
+- mov rbx, rax: đưa giá trị trong rbx vào rax
+- mov rbx, [rax]: trong trường hợp rax chứa một address, đưa giá trị tại address bên trong rax vào rbx
+
+Lệnh mov hoạt động như copy, nó không xóa đi dữ liệu cũ ở vị trí cũ mà chỉ sao chép dữ liệu sang vị trí mới.
+
+*Lưu ý:* nếu như write một register 32 bit sẽ zero-out toàn bộ phần còn lại của register. Đây là điểm đặc trưng của kiến trúc x86_64.
+
+Ví dụ:
+- Mov register 16 bit
+`mov rax, 0xffffffffffffffff
+mov ax, 1111
+kết quả: rax = 0xffffffffffff1111`
+
+- Mov register 32 bit
+`mov rax, 0xffffffffffffffff
+mov eax, 11111111
+kết quả: rax = 0x000000011111111`
+
+Lệnh movsx (move with sign extension): hoạt động tương tự mov nhưng copy sign bit (bit có trọng số lớn nhất dùng để xác định âm hay dương) để mở rộng kích thước.
+
+Ví dụ:
+-  `mov rax, 0xffffffffffffffff
+mov eax, 0xffffffff
+kết quả: rax = 0x00000000ffffffff`
+
+- `mov rax, 0xffffffffffffffff
+mov eax, 0xffffffff
+movsx rax, eax
+kết quả rax, 0xffffffffffffffff`
+
+Program tương tác với máy tính thông qua syscall (system call). Muốn dùng syscall nào thì nạp số hiệu syscall đó vào rax rồi gọi syscall.
+
+Ví dụ: 60 là exit program
+`mov rax, 60
+syscall`
+
+Lệnh as dùng để dịch assembly file thành object file. Lệnh ld để link object file với executable (tệp thực thi). Có thể link nhiều object file với một executable cùng lúc.
+
+Ví dụ:
+`as -o helloWorld.s helloWorld.o
+ld -o helloWorld.o helloWorld
+/program`
+
+Dòng lệnh .intel_syntax noprefix (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh (% trước các register và $ trước command). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
+
+Trong the shell $? lưu exit code cuối của executed command.
+
+## Start - điểm bắt đầu của chương trình
+
+Khi thực hiện ld có thể sẽ hiện thông báo warning 'entry symbol _start'. Tức thiếu start symbol, một thứ để xác định điểm bắt đầu chương trình. Không có nó, chương trình sẽ bắt đầu từ đầu executable.
+
+Xác định _start symbol:
+`.global _start
+_start:`
+
+Trong đó `_start:` là label đánh dấu nơi bắt đầu. `.global _start` giúp _start symbol visible ở linked level, tức hoạt động cả ở executable thay vì chỉ ở object file.
