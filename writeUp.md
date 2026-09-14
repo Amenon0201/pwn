@@ -81,37 +81,43 @@ Ví dụ:
 - Mov register 16 bit
 ```mov rax, 0xffffffffffffffff
 mov ax, 1111
-kết quả: rax = 0xffffffffffff1111```
+kết quả: rax = 0xffffffffffff1111
+```
 
 - Mov register 32 bit
 ```mov rax, 0xffffffffffffffff
 mov eax, 11111111
-kết quả: rax = 0x000000011111111```
+kết quả: rax = 0x000000011111111
+```
 
 Lệnh movsx (move with sign extension): hoạt động tương tự mov nhưng copy sign bit (bit có trọng số lớn nhất dùng để xác định âm hay dương) để mở rộng kích thước.
 
 Ví dụ:
 -  ```mov rax, 0xffffffffffffffff
 mov eax, 0xffffffff
-kết quả: rax = 0x00000000ffffffff```
+kết quả: rax = 0x00000000ffffffff
+```
 
 - ```mov rax, 0xffffffffffffffff
 mov eax, 0xffffffff
 movsx rax, eax
-kết quả rax, 0xffffffffffffffff```
+kết quả rax, 0xffffffffffffffff
+```
 
 Program tương tác với máy tính thông qua syscall (system call). Muốn dùng syscall nào thì nạp số hiệu syscall đó vào rax rồi gọi syscall.
 
 Ví dụ: 60 là exit program
 ```mov rax, 60
-syscall```
+syscall
+```
 
 Lệnh as dùng để dịch assembly file thành object file. Lệnh ld để link object file với executable (tệp thực thi). Có thể link nhiều object file với một executable cùng lúc.
 
 Ví dụ:
 ```as -o helloWorld.s helloWorld.o
 ld -o helloWorld.o helloWorld
-/program```
+./program
+```
 
 Dòng lệnh .intel_syntax noprefix (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh (% trước các register và $ trước command). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
 
@@ -123,6 +129,7 @@ Khi thực hiện ld có thể sẽ hiện thông báo warning 'entry symbol _st
 
 Xác định _start symbol:
 ```.global _start
-_start:```
+_start:
+```
 
 Trong đó `_start:` là label đánh dấu nơi bắt đầu. `.global _start` giúp _start symbol visible ở linked level, tức hoạt động cả ở executable thay vì chỉ ở object file.
