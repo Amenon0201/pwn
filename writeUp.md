@@ -38,10 +38,10 @@ Một số register đặc biệt:
 - rip: chứa địa chỉ của lệnh tiếp theo được thực thi (không thể read hay write trực tiếp)
 - rsp: chứa địa chỉ của vùng nhớ dữ liệu tạm thời (cẩn thận)
 
-Ngoài ra, x86 architecture còn có nhiều register khác để dùng cho: operating system, floating point, xử lý data lớn (512 zmm register),...
+Ngoài ra, x86 architecture còn có nhiều register khác để dùng cho: operating system, floating point, xử lý data lớn (zmm register 512 bit),...
 
 # Memory layout
-
+## Kiến thức chung
 Memory có hai phần chính là text và data. Data được chia làm hai phần là static và dynamic. Static có thể chia làm hai phần là initialize và uninitialized. Dynamic được chia làm hai phần gồm heap và stack.
 
 ![memory layout](/picture/memory_layout.png)
@@ -54,7 +54,30 @@ Memory:
         - Uninitialized (BSS): lưu trữ statics và global variable chưa được khởi tạo giá trị hoặc được khởi tạo giá trị băng 0, có read/write accesible và fixed size.
     - Dynamic:
         - Heap: Có dynamic size và có thể điều chỉnh size qua các lệnh như malloc, free, new, delete,... Thường dùng cấp phát bộ nhớ động cho các dạng dữ liệu động như danh sách liên kết. Sau khi dùng xong mà không release bộ nhớ có thể gây ra lỗi memory leaks và các memory errors khác
-        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out). Dùng push và pop để đẩy dữ liệu vào và lấy dữ liệu ra. Address của stack được lưu trong register rsp
+        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out). Dùng push và pop để đẩy dữ liệu vào và lấy dữ liệu ra. Address của stack được lưu trong register rsp.
+
+## Stack
+Chúng ta có thể push register và immediates vào stack và pop ra register.
+
+```
+mov rax, 0xc001ca75
+push rax
+pop rbx
+```
+Qua đoạn mã trên rbx có value 0xc001ca75. Đồng thời tương tự mov, push chỉ copy chứ không di chuyển dữ liệu.
+
+## LSB và MSB
+LSB (Least Significant Bit) là bit nằm ngoài cùng bên phải của một dãy bit, là bit có giá trị nhỏ nhất. Thay đổi bit này chỉ thay đổi giá trị số đó một lượng rất nhỏ.
+
+MSB (Most Significant Bit) là bit nằm ngoài cùng bên trái của một dãy bit, là bit có giá trị lớn nhất. Thay đổi bit này sẽ làm thay đổi giá trị số đó rất nhiều.
+
+## Little Endian và Big Endian
+
+Kiến trúc x86_64 sử dụng Little Endian: Lưu trữ ngược. Little Endian lưu byte thấp nhất ở địa chỉ nhỏ nhất. Little Endian thay đổi thứ tự byte nhưng không thay đổi thứ tự bit.
+
+![Endianess](/picture/Endianess.png)
+
+Ngược lại, Big Endian lưu byte có trọng số cao nhất ở địa chỉ nhỏ nhất, giống như cách viết số từ trái sang phải của con người.
 
 # Assembly
 ## Kiến thức chung
@@ -70,7 +93,7 @@ Các kiến trúc CPU khác nhau cần bộ assembly khác nhau. Đối với x8
 
 Lệnh mov (move):
 - mov rax, 0x539: đưa giá trị 0x539 vào rax
-- mov rbx, rax: đưa giá trị trong rbx vào rax
+- mov rbx, rax: đưa giá trị trong rax vào rbx
 - mov rbx, [rax]: trong trường hợp rax chứa một address, đưa giá trị tại address bên trong rax vào rbx
 
 Lệnh mov hoạt động như copy, nó không xóa đi dữ liệu cũ ở vị trí cũ mà chỉ sao chép dữ liệu sang vị trí mới.
@@ -89,18 +112,20 @@ Mov register 32 bit
 ```
 mov rax, 0xffffffffffffffff
 mov eax, 11111111
-kết quả: rax = 0x000000011111111
+kết quả: rax = 0x0000000011111111
 ```
 
 Lệnh movsx (move with sign extension): hoạt động tương tự mov nhưng copy sign bit (bit có trọng số lớn nhất dùng để xác định âm hay dương) để mở rộng kích thước.
 
 Ví dụ:
+Không dùng movsx
 ```
 mov rax, 0xffffffffffffffff
 mov eax, 0xffffffff
 kết quả: rax = 0x00000000ffffffff
 ```
 
+Dùng movsx
 ```
 mov rax, 0xffffffffffffffff
 mov eax, 0xffffffff
@@ -108,6 +133,7 @@ movsx rax, eax
 kết quả rax, 0xffffffffffffffff
 ```
 
+## Syscall và Build Executables
 Program tương tác với máy tính thông qua syscall (system call). Muốn dùng syscall nào thì nạp số hiệu syscall đó vào rax rồi gọi syscall.
 
 Ví dụ: 60 là exit program
@@ -120,14 +146,14 @@ Lệnh as dùng để dịch assembly file thành object file. Lệnh ld để l
 
 Ví dụ:
 ```
-as -o helloWorld.s helloWorld.o
-ld -o helloWorld.o helloWorld
-./program
+as helloWorld.s -o helloWorld.o
+ld helloWorld.o -o helloWorld
+./helloWorld
 ```
 
-Dòng lệnh .intel_syntax noprefix (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh (% trước các register và $ trước command). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
+Dòng lệnh .intel_syntax noprefix (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh ('%' trước các register). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
 
-Trong the shell '$?' lưu exit code cuối của executed command.
+Trong the shell 'echo $?' lấy exit code cuối của executed command.
 
 ## Start - điểm bắt đầu của chương trình
 
@@ -140,3 +166,46 @@ _start:
 ```
 
 Trong đó `_start:` là label đánh dấu nơi bắt đầu. `.global _start` giúp _start symbol visible ở linked level, tức hoạt động cả ở executable thay vì chỉ ở object file.
+
+## Address caculator and RIP
+
+Có thể thực hiện vài lệnh tính toán đối với địa chỉ memory:
+
+Sử dụng rax làm index để tính địa chỉ memory.
+```
+mov rax, 0
+mov rbx, [rsp+rax*8] //đọc phần tử nằm trên cùng của stack tại rsp
+inc rax //tăng rax lên 1
+mov rbx, [rsp+rax*8] //đọc phần tử nằm kế tiếp cái trên cùng của stack
+```
+
+Sử dụng lệnh lệnh lea (Load Effective Address) để lấy địa chỉ thay vì data trong địa chỉ
+```
+mov rax, 0
+lea rbx, [rsp+rax*8] //rbx chứa địa chỉ của đầu stack
+mov rbx, [rbx] //rbx chứa dữ liệu đầu stack
+```
+
+lea là một trong số ít lệnh có thể access trực tiếp tới register rip
+```
+lea rax, [rip] //load địa chỉ của lệnh tiếp theo
+lea rax, [rip+8] //load địa chỉ của lệnh tiếp theo cộng thêm 8 bytes
+```
+
+Đồng thời vẫn có thể dùng mov để đọc hoặc ghi trực tiếp
+```
+mov rax, [rip] //đọc dữ liệu từ địa chỉ tương đối rip
+mov [rip], rax //ghi đè lệnh tiếp theo
+```
+
+Ta có thể ghi immediate value trực tiếp vào memory
+```
+mov rax, 0x133337
+mov DWORD PTR [rax], 0x1337 //ghi trực tiếp value 0x1337 vào địa chỉ 0x133337
+```
+Tùy thuộc vào assembler mà có thể viết DWORD thay vì DWORD PTR
+
+BYTE: 1 byte
+WORD: 2 bytes
+DWORD: 4 bytes
+QWORD: 8 bytes
