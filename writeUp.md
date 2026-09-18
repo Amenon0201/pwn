@@ -36,7 +36,7 @@ Có thể thực hiện các phép toán và phép logic với register nếu c�
 
 Một số register đặc biệt:
 - rip: chứa địa chỉ của lệnh tiếp theo được thực thi (không thể read hay write trực tiếp)
-- rsp: chứa địa chỉ của vùng nhớ dữ liệu tạm thời (cẩn thận)
+- rsp: chứa địa chỉ của vùng nhớ dữ liệu tạm thời (stack)
 
 Ngoài ra, x86 architecture còn có nhiều register khác để dùng cho: operating system, floating point, xử lý data lớn (zmm register 512 bit),...
 
@@ -64,7 +64,20 @@ mov rax, 0xc001ca75
 push rax
 pop rbx
 ```
-Qua đoạn mã trên rbx có value 0xc001ca75. Đồng thời tương tự mov, push chỉ copy chứ không di chuyển dữ liệu.
+Qua đoạn mã trên rbx có value 0xc001ca75. 
+
+Tương tự mov, push chỉ copy chứ không di chuyển dữ liệu. Đồng thời pop cũng không xóa dữ liệu trong stack, mà chỉ dịch chuyển qua dữ liệu bị pop.
+
+Register rsp trỏ vào địa chỉ trên cùng của stack. Đồng thời, chúng ta có thể truy cập vào địa chỉ và dữ liệu của bất kỳ phần nàp của stack bằng độ lệch (offset).
+```
+mov rdi, [rsp+8] //load dữ liệu của địa chỉ thứ hai vào rdi
+mov rax, [rsp+16] //load dữ liệu của địa chỉ thứ ba vào rax
+```
+Stack trên thực tế là một vùng nhớ với nhiều byte riêng lẻ. Tuy nhiên ta quy ước chúng như một tập hợp các giá trị 8 bytes (64 bit).
+
+Khi run program, stack không chứa trực tiếp đối số mà chứa địa chỉ trỏ tới từng đối số.
+
+rsp+offset truy cập địa chỉ lớn hơn rsp nếu offset âm và truy cập địa chỉ nhỏ hơn rsp nếu offest âm.
 
 ## LSB và MSB
 LSB (Least Significant Bit) là bit nằm ngoài cùng bên phải của một dãy bit, là bit có giá trị nhỏ nhất. Thay đổi bit này chỉ thay đổi giá trị số đó một lượng rất nhỏ.
@@ -209,3 +222,25 @@ BYTE: 1 byte
 WORD: 2 bytes
 DWORD: 4 bytes
 QWORD: 8 bytes
+
+## Disassembling Programs
+Dùng lệnh objdump để đảo ngược file executable thành file assembly.
+
+```
+objdump -d -M intel /program
+
+Disassembly of section .text:
+
+0000000000401000 <_start>:
+  401000:	48 c7 c7 39 05 00 00 	mov    rdi,0x539
+  401007:	48 c7 c7 00 00 00 00 	mov    rdi,0
+  40100e:	48 c7 c0 3c 00 00 00 	mov    rax,0x3c
+  401015:	0f 05                	syscall
+```
+
+Lệnh objdump không chuẩn intel syntax nên cần `-M intel`
+
+Lệnh objdump hiển thị các byte thô của memory bên cạnh assembly dưới dạng hexadecimal. Đồng thời data được lưu trong register cũng được biểu diễn dưới dạng hexadecimal.
+
+*Ý nghĩa:* Bằng cách đọc mã, chúng ta có thể tìm ra những thông tin thú vị (liên quan tới bảo mật).
+Chẳng hạn như chúng ta biết được rdi chứa data 0x539 trước khi bị set thành 0 trong ví dụ trên.
