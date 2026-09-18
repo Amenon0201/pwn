@@ -15,7 +15,7 @@ Register có khả năng lưu trữ rất ít nhưng lại có tốc độ xử 
 Trong một máy tính có khoảng từ 10 đến 20 register để dùng cho các mục đích phổ biến, và có thể thêm nhiều hơn khoảng một chục đối với máy tính chuyên dụng
 
 ## RAM
-RAM là bộ nhớ khả biến của máy tính, dùng để lưu trữ dữ liệu tạm thời trong quá trình máy tính hoạt động. Dữ liệu trong RAM sẽ mất đi sau khi tắt má
+RAM là bộ nhớ khả biến của máy tính, dùng để lưu trữ dữ liệu tạm thời trong quá trình máy tính hoạt động. Dữ liệu trong RAM sẽ mất đi sau khi tắt máy.
 
 ## Disk
 Disk nơi có kích thước lưu trữ lớn nhất, nhưng cũng có tốc độ xử lý chậm nhất. Khác với RAM, dữ liệu trong disk không bị mất đi khi tắt máy. Disk được dùng làm nơi lưu trữ dữ liệu lâu dài.
@@ -68,7 +68,7 @@ Qua đoạn mã trên rbx có value 0xc001ca75.
 
 Tương tự mov, push chỉ copy chứ không di chuyển dữ liệu. Đồng thời pop cũng không xóa dữ liệu trong stack, mà chỉ dịch chuyển qua dữ liệu bị pop.
 
-Register rsp trỏ vào địa chỉ trên cùng của stack. Đồng thời, chúng ta có thể truy cập vào địa chỉ và dữ liệu của bất kỳ phần nàp của stack bằng độ lệch (offset).
+Register rsp trỏ vào địa chỉ trên cùng của stack. Đồng thời, chúng ta có thể truy cập vào địa chỉ và dữ liệu của bất kỳ phần nào của stack bằng độ lệch (offset).
 ```
 mov rdi, [rsp+8] //load dữ liệu của địa chỉ thứ hai vào rdi
 mov rax, [rsp+16] //load dữ liệu của địa chỉ thứ ba vào rax
