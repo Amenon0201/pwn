@@ -92,6 +92,15 @@ Kiến trúc x86_64 sử dụng Little Endian: Lưu trữ ngược. Little Endia
 
 Ngược lại, Big Endian lưu byte có trọng số cao nhất ở địa chỉ nhỏ nhất, giống như cách viết số từ trái sang phải của con người.
 
+## Calling convention
+
+Calling convention là quy định cách gọi hàm, lấy dữ liệu từ đâu và trả dữ liệu về đâu.
+x86_64 thường sử dụng register để truyền dữ liệu, và dữ liệu trả về register rax.
+
+![Calling convention](/picture/Calling_convention.png)
+
+Nếu có nhiều hơn 6 argument, các dữ liệu tiếp theo được truyền qua stack.
+
 # Assembly
 ## Kiến thức chung
 Assembly (hợp ngữ) là ngôn ngữ bậc thấp gần nhất với machine code (mã máy). Assembly thông qua quá trình assembling (dịch hợp ngữ) thành machine code:
@@ -223,24 +232,3 @@ WORD: 2 bytes
 DWORD: 4 bytes
 QWORD: 8 bytes
 
-## Disassembling Programs
-Dùng lệnh objdump để đảo ngược file executable thành file assembly.
-
-```
-objdump -d -M intel /program
-
-Disassembly of section .text:
-
-0000000000401000 <_start>:
-  401000:	48 c7 c7 39 05 00 00 	mov    rdi,0x539
-  401007:	48 c7 c7 00 00 00 00 	mov    rdi,0
-  40100e:	48 c7 c0 3c 00 00 00 	mov    rax,0x3c
-  401015:	0f 05                	syscall
-```
-
-Lệnh objdump không chuẩn intel syntax nên cần `-M intel`
-
-Lệnh objdump hiển thị các byte thô của memory bên cạnh assembly dưới dạng hexadecimal. Đồng thời data được lưu trong register cũng được biểu diễn dưới dạng hexadecimal.
-
-*Ý nghĩa:* Bằng cách đọc mã, chúng ta có thể tìm ra những thông tin thú vị (liên quan tới bảo mật).
-Chẳng hạn như chúng ta biết được rdi chứa data 0x539 trước khi bị set thành 0 trong ví dụ trên.
