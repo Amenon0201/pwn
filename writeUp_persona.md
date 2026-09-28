@@ -1,3 +1,16 @@
+# MEMORY
+
+## Signed bit và unsigned bit
+
+Signed bit: bit đầu 1 là âm, 0 là dương.
+Quy tắc: Đảo bit và cộng 1
+Ví dụ: 
+0100 = 4
+đảo bit: 1011
+1100 = -4
+
+Trong hệ hex, từ 0 đến 7 là dương, 8 đến f là âm.
+
 # Các lệnh assembly
 
 ## Disassembling Programs
@@ -58,3 +71,91 @@ x/a để đọc nội dung dưới dạng adressing
 x/s để đọc nội dung dưới dạng string
 
 Đặt init vào file assembly để làm breakpoint và dùng lệnh `run` hoặc `r` để chạy chương trình tới breakpoint. Có thể truyền tham số bằng cách viết sau lệnh `run`. Có thể đặt input vào gdb bằng cách viết đường dẫn sau lệnh `run < ` + đường dẫn file.
+
+# SYSCALL
+
+## Một số syscall
+
+0 là read: read(int fd, void *buf, size_t count)
+
+1 là write: write(int fd, void *buf, size_t count)
+
+2 là open: open(const char *pathname, int flags)
+
+note: Một số syscall cần hằng số cổ. Chẳng hạn như open cần flag argument để quyết định cách file được mở (O_RDONLY, O_WRONLY, O_RDWR)
+
+## String arguments
+
+String arguments là một chuỗi byte tiếp diễn trong bộ nhớ.
+
+![String_argument](/picture/String_arguments.png)
+
+note: Có thể viết filename vào rsp từng byte một và dùng 0 kết thúc string argument.
+
+## File descriptors (FDs)
+
+FD 0: Standard Input
+FD 1: Standard Output
+FD2: Standard Error
+
+Ví dụ:
+```
+mov rdi, 1
+mov rsi, [rsp+16]
+mov rdx, 1
+mov rax, 1
+syscall
+```
+tương đương với write(1, [rsp+16], 1)
+
+note: Kết quả của read (số byte đọc khả dụng) nói riêng và chương trình nói chung thường được reuturn vào rax.
+
+## RIP
+
+Có thể ném string argument vào sau syscall exit để lưu trong memory mà không sợ crash out
+```
+_start:
+...
+lea rdi, [rip+path]
+...
+
+path:
+.asciz "/flag" 
+```
+
+note: dùng lea thay vì mov vì open cần adress thay vì data. Syntax rip+path là bỏ qua toàn bộ delta giữa rip và path
+
+## Control flow
+
+### Lệnh Jump
+
+Dùng lệnh `jmp` để skip lệnh (bản chất skip bytes)
+
+Conditional jumps:
+![Conditional_jumps](/picture/Conditional_jumps.png)
+
+### Register Rflags
+
+Register Rflags dùng để lưu trạng thái conditional.
+
+Một số flag quan trọng:
+
+Carry Flag: carry bit vượt giới hạn (unsigned)
+Zero Flag: bit có bằng 0 không
+Overflow Flag: Tương tự CF (signed)
+Signed Flag: bit cao nhất
+
+Một số pattern:
+
+sub: thực hiện phép trừ, lưu kết quả vô register, cập nhật flag
+cmp: thực hiện phép trừ, cập nhật flag
+test: thực hiện phép AND, cập nhật flag
+
+note: Có thể thực hiện loop
+```
+mov rax, 0
+LOOP_HEADER:
+inc rax
+cmp rax, 10
+jb LOOP_HEADER
+```

@@ -95,8 +95,8 @@ Ngược lại, Big Endian lưu byte có trọng số cao nhất ở địa ch�
 ## Calling convention
 
 Calling convention là quy định cách gọi hàm, lấy dữ liệu từ đâu và trả dữ liệu về đâu.
-x86_64 thường sử dụng register để truyền dữ liệu, và dữ liệu trả về register rax.
 
+x86_64 thường sử dụng register để truyền dữ liệu, và dữ liệu trả về register rax.
 ![Calling convention](/picture/Calling_convention.png)
 
 Nếu có nhiều hơn 6 argument, các dữ liệu tiếp theo được truyền qua stack.
@@ -208,7 +208,7 @@ lea rbx, [rsp+rax*8] //rbx chứa địa chỉ của đầu stack
 mov rbx, [rbx] //rbx chứa dữ liệu đầu stack
 ```
 
-lea là một trong số ít lệnh có thể access trực tiếp tới register rip
+lea là một lệnh có thể dùng register rip để thực hiện tính toán
 ```
 lea rax, [rip] //load địa chỉ của lệnh tiếp theo
 lea rax, [rip+8] //load địa chỉ của lệnh tiếp theo cộng thêm 8 bytes
