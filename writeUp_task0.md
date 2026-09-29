@@ -53,10 +53,13 @@ Memory:
         - Initialized (DS): lưu trữ statics và global variable đã được khởi tạo giá trị, có read/write accesible và fixed size.
         - Uninitialized (BSS): lưu trữ statics và global variable chưa được khởi tạo giá trị hoặc được khởi tạo giá trị băng 0, có read/write accesible và fixed size.
     - Dynamic:
-        - Heap: Có dynamic size và có thể điều chỉnh size qua các lệnh như malloc, free, new, delete,... Thường dùng cấp phát bộ nhớ động cho các dạng dữ liệu động như danh sách liên kết. Sau khi dùng xong mà không release bộ nhớ có thể gây ra lỗi memory leaks và các memory errors khác
-        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out). Dùng push và pop để đẩy dữ liệu vào và lấy dữ liệu ra. Address của stack được lưu trong register rsp.
+        - Heap: Có dynamic size và có thể điều chỉnh size qua các hàm/cơ chế như malloc, free, new, delete,... Thường dùng cấp phát bộ nhớ động cho các dạng dữ liệu động như danh sách liên kết. Sau khi dùng xong mà không release bộ nhớ có thể gây ra lỗi memory leaks và các memory errors khác
+        - Stack: Lưu trữ function call, input arguments và local varialbe. Có cơ chế LIFO (Last In First Out). Dùng push và pop để đẩy dữ liệu vào và lấy dữ liệu ra. Address của stack được lưu trong register rsp. Stack đi từ địa chỉ cao đến địa chỉ thấp.
 
 ## Stack
+Note: Nội dung của phần này gồm các kiến thức phần Một số lệnh của assembly ở dưới, nên đọc phần đó xong rồi quay lại. 
+
+### Tương tác với stack
 Chúng ta có thể push register và immediates vào stack và pop ra register.
 
 ```
@@ -66,18 +69,47 @@ pop rbx
 ```
 Qua đoạn mã trên rbx có value 0xc001ca75. 
 
-Tương tự mov, push chỉ copy chứ không di chuyển dữ liệu. Đồng thời pop cũng không xóa dữ liệu trong stack, mà chỉ dịch chuyển qua dữ liệu bị pop.
+Tương tự mov, push chỉ copy chứ không di chuyển dữ liệu. Đồng thời pop cũng không xóa dữ liệu trong stack, mà chỉ dịch chuyển vượt qua dữ liệu bị pop.
 
-Register rsp trỏ vào địa chỉ trên cùng của stack. Đồng thời, chúng ta có thể truy cập vào địa chỉ và dữ liệu của bất kỳ phần nào của stack bằng độ lệch (offset).
+### Register rsp
+
+Register rsp trỏ vào đỉnh hiện tại của stack. Đồng thời, chúng ta có thể truy cập vào địa chỉ và dữ liệu của bất kỳ phần nào của stack bằng độ lệch (offset).
 ```
 mov rdi, [rsp+8] //load dữ liệu của địa chỉ thứ hai vào rdi
 mov rax, [rsp+16] //load dữ liệu của địa chỉ thứ ba vào rax
 ```
-Stack trên thực tế là một vùng nhớ với nhiều byte riêng lẻ. Tuy nhiên ta quy ước chúng như một tập hợp các giá trị 8 bytes (64 bit).
+Stack trên thực tế là một vùng nhớ với nhiều byte riêng lẻ. Tuy nhiên ta quy ước chúng như một tập hợp các giá trị 8 bytes (64 bit) trên x86.
 
 Khi run program, stack không chứa trực tiếp đối số mà chứa địa chỉ trỏ tới từng đối số.
 
-rsp+offset truy cập địa chỉ lớn hơn rsp nếu offset âm và truy cập địa chỉ nhỏ hơn rsp nếu offest âm.
+rsp+offset truy cập địa chỉ lớn hơn rsp nếu offset dương và truy cập địa chỉ nhỏ hơn rsp nếu offest âm.
+
+### Stack frame
+
+Stack frame được tạo ra trên stack mỗi khi một hàm được gọi, dùng để chứa data và xử lý hàm đó. Một stack frame lần lượt gồm có:
+
+- Arguments truyền vào hàm
+- Giá trị return để quay lại stack frame trước đó
+- Register rbp trỏ vào đáy stack frame mới, dùng làm mốc xác định một stack frame
+
+Ví dụ:
+```
+push rbp //lưu rbp của stack frame trước
+mov rbp, rsp //rbp của stack frame hiện tại
+sub rsp, 4 //tạo một vùng 4 bytes trống cho biến cục bộ
+
+mov eax, edi //thực hiện phép cộng edi + esi
+add eax, esi
+
+mov [rbp-4], eax //hai dòng này mô phỏng code, cụ thể là return của hàm
+mov eax, [rbp-4] //chứ về mặt thực thi không có cũng được
+
+add rsp, 4 //giải phóng vùng nhớ
+pop rbp //trả lại rbp của frame trước
+ret //quay lại stack frame trước đó
+```
+
+Note: Stack grown ngược trong memory.
 
 ## LSB và MSB
 LSB (Least Significant Bit) là bit nằm ngoài cùng bên phải của một dãy bit, là bit có giá trị nhỏ nhất. Thay đổi bit này chỉ thay đổi giá trị số đó một lượng rất nhỏ.
@@ -173,9 +205,9 @@ ld helloWorld.o -o helloWorld
 ./helloWorld
 ```
 
-Dòng lệnh .intel_syntax noprefix (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh ('%' trước các register). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
+Dòng lệnh `.intel_syntax noprefix` (viết trong file assembly) cho assembler biết rằng chúng ta dùng syntax của Intel assembly và không cần bổ sung tiền tố trước các lệnh ('%' trước các register). Lệnh này không nằm trong kiến trúc x86 nên nó không được dịch qua executable.
 
-Trong the shell 'echo $?' lấy exit code cuối của executed command.
+Trong the shell `echo $?` lấy exit code cuối của executed command.
 
 ## Start - điểm bắt đầu của chương trình
 
@@ -228,7 +260,9 @@ mov DWORD PTR [rax], 0x1337 //ghi trực tiếp value 0x1337 vào địa chỉ 0
 Tùy thuộc vào assembler mà có thể viết DWORD thay vì DWORD PTR
 
 BYTE: 1 byte
-WORD: 2 bytes
-DWORD: 4 bytes
-QWORD: 8 bytes
 
+WORD: 2 bytes
+
+DWORD: 4 bytes
+
+QWORD: 8 bytes

@@ -127,13 +127,15 @@ note: dùng lea thay vì mov vì open cần adress thay vì data. Syntax rip+pat
 
 ## Control flow
 
-### Lệnh Jump
+### Một số ệnh
 
 Dùng lệnh `jmp` để skip lệnh (bản chất skip bytes)
 
 Conditional jumps:
 ![Conditional_jumps](/picture/Conditional_jumps.png)
 
+Dùng lệnh `setz` (hoặc `setnz`) để set giá trị register dựa trên ZF.
+ 
 ### Register Rflags
 
 Register Rflags dùng để lưu trạng thái conditional.
