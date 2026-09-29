@@ -101,8 +101,8 @@ sub rsp, 4 //tạo một vùng 4 bytes trống cho biến cục bộ
 mov eax, edi //thực hiện phép cộng edi + esi
 add eax, esi
 
-mov [rbp-4], eax //hai dòng này mô phỏng code, cụ thể là return của hàm
-mov eax, [rbp-4] //chứ về mặt thực thi không có cũng được
+mov [rbp-4], eax
+mov eax, [rbp-4] //return hàm
 
 add rsp, 4 //giải phóng vùng nhớ
 pop rbp //trả lại rbp của frame trước
